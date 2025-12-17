@@ -54,7 +54,7 @@ class _EditSosMessageScreenState extends State<EditSosMessageScreen> {
           children: [
             Text(
               'You can adjust the message before it is sent. '
-              'Only edit what you understand — this text will be sent to your emergency contacts.',
+              'Only edit what you understand. This text will be sent to your emergency contacts.',
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 12),

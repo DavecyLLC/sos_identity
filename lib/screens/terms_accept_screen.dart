@@ -45,7 +45,7 @@ class _TermsAcceptScreenState extends State<TermsAcceptScreen> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // Scrollable terms text
+              // 🔹 Scrollable area for the long text
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
@@ -97,7 +97,7 @@ class _TermsAcceptScreenState extends State<TermsAcceptScreen> {
                       const SizedBox(height: 4),
                       const Text(
                         'Your data (IDs, contacts, profile information) is stored locally on your device. '
-                        'The App does not send this information to Davecy LLC or any external server. '
+                        'The app does not send this information to Davecy LLC or any external server. '
                         'You are responsible for securing your device (using screen lock, device password, etc.).',
                       ),
                       const SizedBox(height: 12),
@@ -110,7 +110,7 @@ class _TermsAcceptScreenState extends State<TermsAcceptScreen> {
                       const SizedBox(height: 4),
                       const Text(
                         'The security of your information depends heavily on the security of your phone. '
-                        'If someone has access to your unlocked device, they may be able to view information stored in the App. '
+                        'If someone has access to your unlocked device, they may be able to view information stored in the app. '
                         'Using device-level security (PIN, password, biometrics) is strongly recommended.',
                       ),
                       const SizedBox(height: 12),
@@ -123,9 +123,9 @@ class _TermsAcceptScreenState extends State<TermsAcceptScreen> {
                       const SizedBox(height: 4),
                       const Text(
                         'SOS Identity and Davecy LLC are not responsible for any direct, indirect, incidental, or consequential '
-                        'damages that arise from the use of, inability to use, or misuse of the App. This includes, but is not '
+                        'damages that arise from the use of, inability to use, or misuse of the app. This includes, but is not '
                         'limited to, situations where an SOS message is not sent, not received, or not acted upon by your contacts. '
-                        'You use the App at your own risk and remain fully responsible for your own safety decisions.',
+                        'You use the app at your own risk and remain fully responsible for your own safety decisions.',
                       ),
                       const SizedBox(height: 12),
 
@@ -136,7 +136,7 @@ class _TermsAcceptScreenState extends State<TermsAcceptScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'You are responsible for making sure that all information you store in the App (IDs, contact numbers, '
+                        'You are responsible for making sure that all information you store in the app (IDs, contact numbers, '
                         'medical notes, etc.) is accurate, up to date, and appropriate to share with your trusted contacts.',
                       ),
                       const SizedBox(height: 12),
@@ -148,7 +148,7 @@ class _TermsAcceptScreenState extends State<TermsAcceptScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Davecy LLC may update or change the App or these terms at any time. Continued use of the App after changes '
+                        'Davecy LLC may update or change the app or these terms at any time. Continued use of the app after changes '
                         'have been published means you accept the updated terms.',
                       ),
                       const SizedBox(height: 12),
@@ -170,7 +170,7 @@ class _TermsAcceptScreenState extends State<TermsAcceptScreen> {
 
               const SizedBox(height: 8),
 
-              // Checkbox + buttons pinned at bottom
+              // 🔹 Checkbox row
               Row(
                 children: [
                   Checkbox(
@@ -190,6 +190,7 @@ class _TermsAcceptScreenState extends State<TermsAcceptScreen> {
               ),
               const SizedBox(height: 8),
 
+              // 🔹 Buttons at the bottom
               Row(
                 children: [
                   Expanded(
