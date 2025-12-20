@@ -62,16 +62,15 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+
 	<!-- Location permission: used for GPS link in SOS alerts -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>SOS Identity uses your location only when you choose to include a GPS link in an SOS alert to your trusted contacts.</string>
 
-	<!-- If you ever request “Always”, keep this. If not, you can remove both Always keys. -->
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>SOS Identity may use location to support SOS safety features when you enable location sharing for alerts.</string>
-
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>SOS Identity may use location in the background only if you enable it, to support SOS alerts to trusted contacts.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>SOS Identity needs permission to save images to your photo library when you choose to export or save an ID image.</string>
 
 	<!-- Camera permission: used for taking photos of IDs -->
 	<key>NSCameraUsageDescription</key>
