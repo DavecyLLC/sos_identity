@@ -1,35 +1,27 @@
 name: sos_identity
 description: A personal safety and identity emergency app.
+publish_to: "none"
 
-publish_to: 'none'
-
-version: 1.0.0+8   # ⬅️ Build number bumped from +1 to +2
+version: 1.0.0+8
 
 environment:
-  sdk: ^3.10.3
-
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
-  dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.8
 
+  cupertino_icons: ^1.0.8
+  shared_preferences: ^2.5.4
+  image_picker: ^1.2.1
+  url_launcher: ^6.3.2
+  geolocator: ^14.0.2
+  flutter_secure_storage: ^10.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^6.0.0
-
-  flutter_launcher_icons: ^0.13.1   # ✅ ADDED (correct place)
 
 flutter:
   uses-material-design: true
-
-# ✅ MUST be at TOP LEVEL (not inside flutter:)
-flutter_icons:
-  ios: true
-  android: true
-  image_path: "assets/icon/app_icon.png"
-  remove_alpha_ios: true
