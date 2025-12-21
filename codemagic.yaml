@@ -12,6 +12,11 @@ workflows:
         - app_store_connect
 
     scripts:
+      - name: Set Flutter version
+        script: |
+          flutter --version
+          flutter doctor
+
       - name: Flutter pub get
         script: flutter pub get
 
@@ -21,13 +26,14 @@ workflows:
       - name: Clean iOS build artifacts
         script: |
           cd ios
-          rm -rf Pods Podfile.lock .symlinks
+          rm -rf Pods Podfile.lock .symlinks DerivedData
           cd ..
 
-      - name: Install CocoaPods dependencies
+      - name: Install CocoaPods dependencies (CRITICAL for plugin setup)
         script: |
           cd ios
-          pod install --repo-update
+          pod repo update
+          pod install --verbose
           cd ..
 
       - name: Build IPA (no codesign here; Codemagic handles with integration)

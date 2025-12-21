@@ -2,7 +2,7 @@ name: sos_identity
 description: A personal safety and identity emergency app.
 publish_to: "none"
 
-version: 1.0.0+11
+version: 1.0.0+12
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

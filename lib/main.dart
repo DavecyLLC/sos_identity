@@ -9,9 +9,15 @@ void main() async {
   // ✅ CRITICAL: Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
   
-  // ✅ CRITICAL: Initialize SharedPreferences BEFORE runApp
-  // This prevents the crash by ensuring the native plugin is ready
-  await SharedPreferences.getInstance();
+  // ✅ CRITICAL: Initialize SharedPreferences BEFORE runApp with retry logic
+  try {
+    await SharedPreferences.getInstance();
+  } catch (e) {
+    debugPrint('SharedPreferences init failed: $e');
+    // Try one more time after a small delay
+    await Future.delayed(const Duration(milliseconds: 100));
+    await SharedPreferences.getInstance();
+  }
   
   runApp(const SafeIdApp());
 }

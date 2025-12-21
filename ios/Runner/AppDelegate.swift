@@ -7,12 +7,11 @@ import Flutter
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // Call super FIRST to ensure Flutter is initialized
-    let result = super.application(application, didFinishLaunchingWithOptions: launchOptions)
-    
-    // Then register plugins
+    // CRITICAL: Register plugins BEFORE calling super
+    // This ensures plugins are ready when Flutter initializes
     GeneratedPluginRegistrant.register(with: self)
     
-    return result
+    // Then call super to complete initialization
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }
