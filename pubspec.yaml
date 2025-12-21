@@ -3,7 +3,7 @@ description: A personal safety and identity emergency app.
 
 publish_to: 'none'
 
-version: 1.0.0+5   # ⬅️ Build number bumped from +1 to +2
+version: 1.0.0+6   # ⬅️ Build number bumped from +1 to +2
 
 environment:
   sdk: ^3.10.3
