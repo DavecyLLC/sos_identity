@@ -1,117 +1,215 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import 'screens/dashboard_screen.dart';
-import 'screens/terms_accept_screen.dart';
-import 'services/local_storage.dart';
-
-void main() {
+/// ✅ iPad-safe Flutter startup:
+/// - Ensures Flutter binding is initialized
+/// - Catches async errors (prevents hard crash when possible)
+/// - Does NOT call plugins (geolocator / secure storage / image picker) before runApp()
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const SafeIdApp());
+
+  // Catch Flutter framework errors
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    if (kReleaseMode) {
+      // In release, you could log to a service later (Crashlytics etc.)
+    }
+  };
+
+  // Catch async errors outside Flutter
+  runZonedGuarded(() {
+    runApp(const MyApp());
+  }, (Object error, StackTrace stack) {
+    if (kDebugMode) {
+      // This helps a lot during local runs
+      // ignore: avoid_print
+      print('UNCAUGHT ZONE ERROR: $error\n$stack');
+    }
+  });
 }
 
-class SafeIdApp extends StatelessWidget {
-  const SafeIdApp({super.key});
+/// Replace this with your existing App widget if you already have one.
+/// Keep this structure: show a lightweight splash, then navigate after init.
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'SOS Identity',
       debugShowCheckedModeBanner: false,
-      theme: _buildTheme(),
-      home: const _TermsGate(),
+      theme: ThemeData(
+        useMaterial3: true,
+      ),
+      home: const AppBootstrap(),
     );
   }
 }
 
-/// ---------------------------------------------------------
-///  APP THEME: Orange primary, Blue secondary
-///  Styled buttons: Filled = Orange, Outlined = Orange border/text
-/// ---------------------------------------------------------
-ThemeData _buildTheme() {
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.orange,
-      primary: Colors.orange,
-      secondary: Colors.blue,
-      brightness: Brightness.light,
-    ),
+/// ✅ Boots the app safely:
+/// - First paints UI (prevents "crash on launch" from heavy startup)
+/// - Then runs initialization AFTER first frame
+class AppBootstrap extends StatefulWidget {
+  const AppBootstrap({super.key});
 
-    // 🔶 FILLED BUTTONS (Accept, Start Safety, etc.)
-    filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        backgroundColor: Colors.orange,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    ),
-
-    // 🟠 OUTLINED BUTTONS (View Terms, Add optional items)
-    outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.orange,
-        side: const BorderSide(color: Colors.orange, width: 1.5),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    ),
-
-    // 🟠 ELEVATED BUTTONS (Legacy buttons)
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.orange,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    ),
-  );
+  @override
+  State<AppBootstrap> createState() => _AppBootstrapState();
 }
 
-/// ---------------------------------------------------------
-///  TERMS GATE:
-///  If user has not accepted Terms → show the TermsAcceptScreen.
-///  If accepted → show Dashboard.
-/// ---------------------------------------------------------
-class _TermsGate extends StatelessWidget {
-  const _TermsGate();
+class _AppBootstrapState extends State<AppBootstrap> {
+  bool _ready = false;
+  Object? _initError;
 
-  Future<bool> _checkAccepted() async {
-    return LocalStorage.getTermsAccepted();
+  @override
+  void initState() {
+    super.initState();
+
+    // ✅ Defer any setup until AFTER the first frame is rendered.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await _initializeAppSafely();
+        if (!mounted) return;
+        setState(() => _ready = true);
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _initError = e;
+          _ready = false;
+        });
+      }
+    });
+  }
+
+  /// ✅ Put ALL plugin calls here (NOT in main()).
+  /// If one plugin is crashing on iPad, it will crash here instead of "on launch",
+  /// and Apple reviewers can at least see the app open (or you'll get a visible error screen).
+  Future<void> _initializeAppSafely() async {
+    // IMPORTANT RULE:
+    // Do not request permissions here automatically.
+    // Only request permissions after a user taps a button (Apple prefers this).
+
+    // Examples of things that are safe:
+    // - Read SharedPreferences
+    // - Load local JSON/assets
+    //
+    // Avoid calling these here automatically:
+    // - Geolocator.getCurrentPosition()
+    // - requestPermission() at startup
+    // - flutter_secure_storage read/write at startup (if it causes native crash)
+    //
+    // If you NEED secure storage on startup, do it later in a screen after UI loads.
+    await Future<void>.delayed(const Duration(milliseconds: 50));
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: _checkAccepted(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Theme.of(context).colorScheme.primary,
+    if (_initError != null) {
+      return _StartupErrorScreen(error: _initError.toString());
+    }
+
+    if (!_ready) {
+      return const _SplashScreen();
+    }
+
+    // ✅ Replace this with your real first screen / dashboard / home route.
+    // Example:
+    // return const DashboardScreen();
+    return const _HomePlaceholder();
+  }
+}
+
+class _SplashScreen extends StatelessWidget {
+  const _SplashScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SizedBox(
+            width: 220,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.shield, size: 56),
+                SizedBox(height: 12),
+                Text(
+                  'SOS Identity',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
+                SizedBox(height: 10),
+                CircularProgressIndicator(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StartupErrorScreen extends StatelessWidget {
+  final String error;
+  const _StartupErrorScreen({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 52),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Startup Error',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    error,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Just restart app manually
+                    },
+                    child: const Text('Close and reopen the app'),
+                  ),
+                ],
               ),
             ),
-          );
-        }
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-        final accepted = snapshot.data ?? false;
+/// Temporary placeholder home.
+/// Replace with your actual first screen.
+class _HomePlaceholder extends StatelessWidget {
+  const _HomePlaceholder();
 
-        if (!accepted) {
-          return const TermsAcceptScreen();
-        }
-
-        return const DashboardScreen();
-      },
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('SOS Identity')),
+      body: const SafeArea(
+        child: Center(
+          child: Text(
+            'App launched successfully.\nReplace this with your dashboard screen.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
     );
   }
 }
