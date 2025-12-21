@@ -3,27 +3,18 @@ description: A personal safety and identity emergency app.
 
 publish_to: 'none'
 
-version: 1.0.0+7   # ⬅️ Build number bumped from +1 to +2
+version: 1.0.0+8   # ⬅️ Build number bumped from +1 to +2
 
 environment:
   sdk: ^3.10.3
 
+
 dependencies:
+  dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
 
-
-#dependencies:
-#  flutter:
-#    sdk: flutter
-
-#  cupertino_icons: ^1.0.8
-#  shared_preferences: ^2.5.4
-#  image_picker: ^1.2.1
-#  url_launcher: ^6.3.2
-#  geolocator: ^14.0.2
-  #flutter_secure_storage: ^10.0.0
 
 dev_dependencies:
   flutter_test:
