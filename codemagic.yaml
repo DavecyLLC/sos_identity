@@ -7,6 +7,7 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
+      cocoapods: default
       groups:
         - app_store_connect
 
@@ -16,6 +17,18 @@ workflows:
 
       - name: Flutter clean
         script: flutter clean
+
+      - name: Clean iOS build artifacts
+        script: |
+          cd ios
+          rm -rf Pods Podfile.lock .symlinks
+          cd ..
+
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios
+          pod install --repo-update
+          cd ..
 
       - name: Build IPA (no codesign here; Codemagic handles with integration)
         script: |

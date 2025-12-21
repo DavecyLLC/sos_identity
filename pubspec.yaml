@@ -2,7 +2,7 @@ name: sos_identity
 description: A personal safety and identity emergency app.
 publish_to: "none"
 
-version: 1.0.0+10
+version: 1.0.0+11
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -14,17 +14,17 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # Core
-  shared_preferences: ^2.5.4
+  shared_preferences: ^2.3.2
 
   # Media / links
   image_picker: ^1.2.1
   url_launcher: ^6.3.2
 
+  # Security - REMOVED temporarily due to iOS crash
+  # flutter_secure_storage: ^10.0.0
+
   # Location
   geolocator: ^14.0.2
-
-  # ❌ TEMPORARILY REMOVE secure storage until iOS build stops crashing
-  # flutter_secure_storage: ^10.0.0
 
 dev_dependencies:
   flutter_test:

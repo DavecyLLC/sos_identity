@@ -1,22 +1,31 @@
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// TEMPORARILY DISABLED: flutter_secure_storage causes iOS crashes
+// We'll store PIN in SharedPreferences as a fallback until the iOS issue is resolved
+// import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../models/id_model.dart';
 import '../models/contact_model.dart';
 import '../models/user_profile.dart';
 
 class LocalStorage {
+  // SharedPreferences keys
   static const String _idsKey = 'safeid_ids';
   static const String _contactsKey = 'safeid_contacts';
   static const String _profileKey = 'safeid_profile';
   static const String _emergencyIdKey = 'safeid_emergency_id';
-
   static const String _lockEnabledKey = 'safeid_lock_enabled';
   static const String _lastUnlockKey = 'safeid_last_unlock_epoch';
   static const String _termsAcceptedKey = 'safeid_terms_accepted';
 
-  // TEMPORARY (until iOS build is stable): store PIN in SharedPreferences
+  // PIN key (temporarily in SharedPreferences due to iOS secure storage crash)
   static const String _pinCodeKey = 'safeid_pin_code';
+
+  // Secure storage instance (DISABLED for iOS stability)
+  // static const FlutterSecureStorage _secure = FlutterSecureStorage();
 
   static Future<SharedPreferences> _prefs() => SharedPreferences.getInstance();
 
@@ -24,15 +33,13 @@ class LocalStorage {
 
   static Future<List<IdModel>> loadIds() async {
     final prefs = await _prefs();
-    final raw = prefs.getString(_idsKey);
-    if (raw == null || raw.trim().isEmpty) return [];
+    final jsonString = prefs.getString(_idsKey);
+    if (jsonString == null || jsonString.isEmpty) return [];
 
     try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! List) return [];
+      final decoded = jsonDecode(jsonString) as List<dynamic>;
       return decoded
-          .whereType<Map>()
-          .map((m) => IdModel.fromJson(Map<String, dynamic>.from(m)))
+          .map((item) => IdModel.fromJson(item as Map<String, dynamic>))
           .toList();
     } catch (_) {
       return [];
@@ -41,23 +48,21 @@ class LocalStorage {
 
   static Future<void> saveIds(List<IdModel> ids) async {
     final prefs = await _prefs();
-    final list = ids.map((e) => e.toJson()).toList();
-    await prefs.setString(_idsKey, jsonEncode(list));
+    final jsonString = jsonEncode(ids.map((id) => id.toJson()).toList());
+    await prefs.setString(_idsKey, jsonString);
   }
 
   // ---------------- Contacts ----------------
 
   static Future<List<ContactModel>> loadContacts() async {
     final prefs = await _prefs();
-    final raw = prefs.getString(_contactsKey);
-    if (raw == null || raw.trim().isEmpty) return [];
+    final jsonString = prefs.getString(_contactsKey);
+    if (jsonString == null || jsonString.isEmpty) return [];
 
     try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! List) return [];
+      final decoded = jsonDecode(jsonString) as List<dynamic>;
       return decoded
-          .whereType<Map>()
-          .map((m) => ContactModel.fromJson(Map<String, dynamic>.from(m)))
+          .map((item) => ContactModel.fromJson(item as Map<String, dynamic>))
           .toList();
     } catch (_) {
       return [];
@@ -66,21 +71,20 @@ class LocalStorage {
 
   static Future<void> saveContacts(List<ContactModel> contacts) async {
     final prefs = await _prefs();
-    final list = contacts.map((e) => e.toJson()).toList();
-    await prefs.setString(_contactsKey, jsonEncode(list));
+    final jsonString = jsonEncode(contacts.map((c) => c.toJson()).toList());
+    await prefs.setString(_contactsKey, jsonString);
   }
 
   // ---------------- Profile ----------------
 
   static Future<UserProfile?> loadProfile() async {
     final prefs = await _prefs();
-    final raw = prefs.getString(_profileKey);
-    if (raw == null || raw.trim().isEmpty) return null;
+    final jsonString = prefs.getString(_profileKey);
+    if (jsonString == null || jsonString.isEmpty) return null;
 
     try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map) return null;
-      return UserProfile.fromJson(Map<String, dynamic>.from(decoded));
+      final decoded = jsonDecode(jsonString) as Map<String, dynamic>;
+      return UserProfile.fromJson(decoded);
     } catch (_) {
       return null;
     }
@@ -105,24 +109,22 @@ class LocalStorage {
 
   static Future<Map<String, String>?> getEmergencyIdRef() async {
     final prefs = await _prefs();
-    final raw = prefs.getString(_emergencyIdKey);
-    if (raw == null || raw.trim().isEmpty) return null;
+    final jsonString = prefs.getString(_emergencyIdKey);
+    if (jsonString == null || jsonString.isEmpty) return null;
 
     try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map) return null;
-      final m = Map<String, dynamic>.from(decoded);
+      final decoded = jsonDecode(jsonString) as Map<String, dynamic>;
       return {
-        'type': (m['type'] as String?) ?? '',
-        'number': (m['number'] as String?) ?? '',
-        'country': (m['country'] as String?) ?? '',
+        'type': decoded['type'] as String? ?? '',
+        'number': decoded['number'] as String? ?? '',
+        'country': decoded['country'] as String? ?? '',
       };
     } catch (_) {
       return null;
     }
   }
 
-  // ---------------- Lock + PIN ----------------
+  // ---------------- Lock / PIN ----------------
 
   static Future<bool> getLockEnabled() async {
     final prefs = await _prefs();
@@ -134,21 +136,24 @@ class LocalStorage {
     await prefs.setBool(_lockEnabledKey, enabled);
   }
 
+  // TEMPORARY: Store PIN in SharedPreferences until flutter_secure_storage iOS issue is fixed
+  // NOTE: This is less secure but prevents crashes. Re-enable secure storage when stable.
   static Future<String?> getPinCode() async {
-    final prefs = await _prefs();
-    final pin = prefs.getString(_pinCodeKey);
-    if (pin == null || pin.trim().isEmpty) return null;
-    return pin;
+    try {
+      final prefs = await _prefs();
+      return prefs.getString(_pinCodeKey);
+    } catch (_) {
+      return null;
+    }
   }
 
   static Future<void> setPinCode(String pin) async {
-    final prefs = await _prefs();
-    await prefs.setString(_pinCodeKey, pin);
-  }
-
-  static Future<void> clearPinCode() async {
-    final prefs = await _prefs();
-    await prefs.remove(_pinCodeKey);
+    try {
+      final prefs = await _prefs();
+      await prefs.setString(_pinCodeKey, pin);
+    } catch (_) {
+      // Fail silently
+    }
   }
 
   static Future<DateTime?> getLastUnlockTime() async {
