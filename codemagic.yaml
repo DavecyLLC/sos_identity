@@ -1,49 +1,27 @@
 workflows:
-  ios-release:
-    name: iOS Release (TestFlight)
+  ios_release:
+    name: iOS Release
     max_build_duration: 60
     instance_type: mac_mini_m2
+
     environment:
       flutter: stable
       xcode: latest
-      vars:
-        BUNDLE_ID: "com.davecy.sosidentity"
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
-          source: true
+      groups:
+        - app_store_connect
 
-    
     scripts:
-      - name: Flutter clean + get
-        script: |
-          flutter --version
-          flutter clean
-          flutter pub get
+      - name: Flutter pub get
+        script: flutter pub get
 
-      - name: iOS pods clean (important)
-        script: |
-          rm -rf ios/Pods ios/Podfile.lock
-          cd ios
-          pod repo update
-          pod install
-          cd ..
+      - name: Flutter clean
+        script: flutter clean
 
-      - name: Set iOS build number (auto-increment)
+      - name: Build IPA (no codesign here; Codemagic handles with integration)
         script: |
-          # Uses Codemagic build counter as iOS CFBundleVersion
-          # Keeps CFBundleShortVersionString from pubspec.yaml (1.0.0 etc.)
-          flutter build ipa --release --build-number=$BUILD_NUMBER
+          flutter build ipa --release
 
     artifacts:
       - build/ios/ipa/*.ipa
-      - build/ios/ipa/*.dSYM.zip
+      - build/ios/archive/*.xcarchive
       - flutter_drive.log
-
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
