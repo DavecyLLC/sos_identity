@@ -76,6 +76,10 @@
 	<key>NSCameraUsageDescription</key>
 	<string>SOS Identity uses your camera so you can capture photos of your ID documents for quick reference in emergencies.</string>
 
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>SOS Identity uses your location only when you choose to include a GPS link in an SOS alert to your trusted contacts. Location is not tracked continuously.</string>
+
+
 	<!-- Photo library permission: used for picking existing ID photos -->
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>SOS Identity needs access to your photos so you can select existing images of your IDs to store in the app.</string>
