@@ -1,38 +1,50 @@
 class UserProfile {
   final String fullName;
-  final String dateOfBirth; // keep as string for now (e.g. 1990-05-21)
-  final String bloodType;   // e.g. O+, A-, etc.
-  final String medicalNotes; // allergies, conditions, meds
+  final String phoneNumber; // ✅ NEW (user-entered)
+  final String bloodType;
+  final String medicalNotes;
 
   const UserProfile({
     required this.fullName,
-    required this.dateOfBirth,
+    required this.phoneNumber,
     required this.bloodType,
     required this.medicalNotes,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      'fullName': fullName,
-      'dateOfBirth': dateOfBirth,
-      'bloodType': bloodType,
-      'medicalNotes': medicalNotes,
-    };
-  }
-
-  factory UserProfile.fromJson(Map<String, dynamic> json) {
-    return UserProfile(
-      fullName: json['fullName'] as String? ?? '',
-      dateOfBirth: json['dateOfBirth'] as String? ?? '',
-      bloodType: json['bloodType'] as String? ?? '',
-      medicalNotes: json['medicalNotes'] as String? ?? '',
-    );
-  }
-
   static const empty = UserProfile(
     fullName: '',
-    dateOfBirth: '',
+    phoneNumber: '',
     bloodType: '',
     medicalNotes: '',
   );
+
+  UserProfile copyWith({
+    String? fullName,
+    String? phoneNumber,
+    String? bloodType,
+    String? medicalNotes,
+  }) {
+    return UserProfile(
+      fullName: fullName ?? this.fullName,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      bloodType: bloodType ?? this.bloodType,
+      medicalNotes: medicalNotes ?? this.medicalNotes,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'fullName': fullName,
+        'phoneNumber': phoneNumber,
+        'bloodType': bloodType,
+        'medicalNotes': medicalNotes,
+      };
+
+  static UserProfile fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      fullName: (json['fullName'] ?? '').toString(),
+      phoneNumber: (json['phoneNumber'] ?? '').toString(),
+      bloodType: (json['bloodType'] ?? '').toString(),
+      medicalNotes: (json['medicalNotes'] ?? '').toString(),
+    );
+  }
 }

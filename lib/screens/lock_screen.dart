@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-
 import '../services/local_storage.dart';
 
 class LockScreen extends StatefulWidget {
-  /// If true, we are setting a new PIN (user enters and confirms).
-  /// If false, we are verifying PIN to unlock.
-  final bool setupMode;
+  final bool setupMode; // true = set PIN, false = unlock
 
   const LockScreen({super.key, required this.setupMode});
 
@@ -14,172 +11,174 @@ class LockScreen extends StatefulWidget {
 }
 
 class _LockScreenState extends State<LockScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _pinController = TextEditingController();
-  final _confirmController = TextEditingController();
+  final _pinCtrl = TextEditingController();
+  final _confirmCtrl = TextEditingController();
 
-  String? _errorText;
-  bool _loading = false;
+  bool _busy = false;
+  String? _error;
 
   @override
   void dispose() {
-    _pinController.dispose();
-    _confirmController.dispose();
+    _pinCtrl.dispose();
+    _confirmCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _handleSetup() async {
-    if (!_formKey.currentState!.validate()) return;
+  bool _isValidPin(String pin) {
+    final p = pin.trim();
+    return RegExp(r'^\d{4,8}$').hasMatch(p); // 4–8 digits
+  }
 
-    final pin = _pinController.text.trim();
-    final confirm = _confirmController.text.trim();
-
-    if (pin != confirm) {
-      setState(() {
-        _errorText = 'PIN codes do not match.';
-      });
-      return;
-    }
-
+  Future<void> _submit() async {
     setState(() {
-      _errorText = null;
-      _loading = true;
+      _error = null;
+      _busy = true;
     });
 
-    await LocalStorage.setPinCode(pin);
-    await LocalStorage.setLastUnlockTime(DateTime.now());
+    try {
+      if (widget.setupMode) {
+        final pin = _pinCtrl.text.trim();
+        final confirm = _confirmCtrl.text.trim();
 
-    if (mounted) {
-      Navigator.of(context).pop(true); // success
+        if (!_isValidPin(pin)) {
+          setState(() => _error = 'PIN must be 4–8 digits.');
+          return;
+        }
+        if (pin != confirm) {
+          setState(() => _error = 'PINs do not match.');
+          return;
+        }
+
+        await LocalStorage.setPinCode(pin);
+        await LocalStorage.setLockEnabled(true);
+        await LocalStorage.setLastUnlockTime(DateTime.now());
+
+        if (!mounted) return;
+        Navigator.of(context).pop(true);
+      } else {
+        final entered = _pinCtrl.text.trim();
+        final saved = await LocalStorage.getPinCode();
+
+        if (saved == null || saved.isEmpty) {
+          setState(() => _error = 'No PIN is set. Turn on App Lock in Settings.');
+          return;
+        }
+
+        if (entered != saved) {
+          setState(() => _error = 'Incorrect PIN.');
+          return;
+        }
+
+        await LocalStorage.setLastUnlockTime(DateTime.now());
+
+        if (!mounted) return;
+        Navigator.of(context).pop(true);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
-  Future<void> _handleVerify() async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _forgotPinReset() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Forgot PIN?'),
+        content: const Text(
+          'For your security, resetting the PIN will erase saved IDs, contacts, and profile data on this device.\n\nDo you want to continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
 
-    setState(() {
-      _loading = true;
-      _errorText = null;
-    });
+    if (ok != true) return;
 
-    final storedPin = await LocalStorage.getPinCode();
-    final entered = _pinController.text.trim();
+    await LocalStorage.resetPinAndWipeData();
 
-    if (storedPin == null || storedPin.isEmpty) {
-      setState(() {
-        _errorText = 'No PIN is set. Disable lock or set a new PIN in Settings.';
-        _loading = false;
-      });
-      return;
-    }
-
-    if (storedPin != entered) {
-      setState(() {
-        _errorText = 'Incorrect PIN. Try again.';
-        _loading = false;
-      });
-      return;
-    }
-
-    await LocalStorage.setLastUnlockTime(DateTime.now());
-
-    if (mounted) {
-      Navigator.of(context).pop(true); // unlocked
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('PIN reset. Data cleared for security.')),
+    );
+    Navigator.of(context).pop(false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isSetup = widget.setupMode;
+    final title = widget.setupMode ? 'Set App PIN' : 'Enter PIN';
+    final subtitle = widget.setupMode
+        ? 'Create a PIN to protect IDs, Contacts, and Settings.'
+        : 'Enter your PIN to continue.';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isSetup ? 'Set App PIN' : 'Unlock SOS Identity'),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.lock,
-                    size: 64,
-                    color: theme.colorScheme.primary,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(subtitle, textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+
+                TextField(
+                  controller: _pinCtrl,
+                  keyboardType: TextInputType.number,
+                  obscureText: true,
+                  maxLength: 8,
+                  decoration: const InputDecoration(
+                    labelText: 'PIN (4–8 digits)',
+                    border: OutlineInputBorder(),
+                    counterText: '',
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    isSetup
-                        ? 'Choose a 4-digit PIN to protect your IDs and SOS.'
-                        : 'Enter your 4-digit PIN to continue.',
-                    style: theme.textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  TextFormField(
-                    controller: _pinController,
-                    decoration: const InputDecoration(
-                      labelText: 'PIN',
-                      hintText: '4 digits',
-                    ),
-                    obscureText: true,
+                ),
+
+                if (widget.setupMode) ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _confirmCtrl,
                     keyboardType: TextInputType.number,
-                    maxLength: 4,
-                    validator: (value) {
-                      final v = value?.trim() ?? '';
-                      if (v.length != 4) {
-                        return 'PIN must be 4 digits.';
-                      }
-                      if (int.tryParse(v) == null) {
-                        return 'PIN must be numbers only.';
-                      }
-                      return null;
-                    },
-                  ),
-                  if (isSetup) ...[
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _confirmController,
-                      decoration: const InputDecoration(
-                        labelText: 'Confirm PIN',
-                      ),
-                      obscureText: true,
-                      keyboardType: TextInputType.number,
-                      maxLength: 4,
-                      validator: (value) {
-                        final v = value?.trim() ?? '';
-                        if (v.length != 4) {
-                          return 'Confirm your 4-digit PIN.';
-                        }
-                        return null;
-                      },
+                    obscureText: true,
+                    maxLength: 8,
+                    decoration: const InputDecoration(
+                      labelText: 'Confirm PIN',
+                      border: OutlineInputBorder(),
+                      counterText: '',
                     ),
-                  ],
-                  if (_errorText != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      _errorText!,
-                      style: TextStyle(
-                        color: theme.colorScheme.error,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: _loading
-                        ? null
-                        : () =>
-                            isSetup ? _handleSetup() : _handleVerify(),
-                    icon: Icon(isSetup ? Icons.check : Icons.lock_open),
-                    label: Text(isSetup ? 'Save PIN' : 'Unlock'),
                   ),
                 ],
-              ),
+
+                if (_error != null) ...[
+                  const SizedBox(height: 8),
+                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                ],
+
+                const SizedBox(height: 16),
+
+                FilledButton.icon(
+                  onPressed: _busy ? null : _submit,
+                  icon: const Icon(Icons.lock),
+                  label: Text(widget.setupMode ? 'Save PIN' : 'Unlock'),
+                ),
+
+                if (!widget.setupMode) ...[
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: _busy ? null : _forgotPinReset,
+                    child: const Text('Forgot PIN? Reset'),
+                  ),
+                ],
+              ],
             ),
           ),
         ),

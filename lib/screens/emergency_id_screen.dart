@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../models/id_model.dart';
 import '../services/local_storage.dart';
+import '../services/sms_service.dart';
 
 class EmergencyIdScreen extends StatefulWidget {
   const EmergencyIdScreen({super.key});

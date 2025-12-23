@@ -4,10 +4,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/local_storage.dart';
 import 'lock_screen.dart';
 import 'terms_accept_screen.dart';
+import 'profile_screen.dart'; // ✅ ADD
 
 // TODO: put your real GitHub Pages URL here:
-const String _privacyPolicyUrl =
-    'https://davecyllc.github.io/SOS-Identity-App/';
+const String _privacyPolicyUrl = 'https://davecyllc.github.io/SOS-Identity-App/';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -41,7 +41,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (value == _lockEnabled) return;
 
     if (value == true) {
-      // Turning ON lock → user must set or confirm PIN
       final ok = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           builder: (_) => const LockScreen(setupMode: true),
@@ -49,31 +48,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       if (ok == true) {
         await LocalStorage.setLockEnabled(true);
-        setState(() {
-          _lockEnabled = true;
-        });
+        setState(() => _lockEnabled = true);
       }
     } else {
-      // Turning OFF lock
       await LocalStorage.setLockEnabled(false);
-      setState(() {
-        _lockEnabled = false;
-      });
+      setState(() => _lockEnabled = false);
     }
   }
 
   Future<void> _openTerms() async {
-    // Your existing TermsAcceptScreen likely has no "showOnly" named parameter,
-    // so we just call it as-is:
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => const TermsAcceptScreen(),
       ),
     );
     final accepted = await LocalStorage.getTermsAccepted();
-    setState(() {
-      _termsAccepted = accepted;
-    });
+    setState(() => _termsAccepted = accepted);
   }
 
   Future<void> _openPrivacyPolicy() async {
@@ -94,12 +84,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _openProfile() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     if (_loading) {
-      // ❌ must NOT be const, because AppBar is not const
       return Scaffold(
         appBar: AppBar(
           title: const Text('Settings'),
@@ -115,11 +110,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // PROFILE SECTION ✅ NEW
+          Text(
+            'Profile',
+            style:
+                theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Your Profile'),
+            subtitle: const Text('Your name + phone are included in SOS alerts'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _openProfile,
+          ),
+
+          const SizedBox(height: 24),
+
           // SECURITY SECTION
           Text(
             'Security',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style:
+                theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
 
@@ -139,8 +152,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: () async {
                 await Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) =>
-                        const LockScreen(setupMode: true), // re-setup PIN
+                    builder: (_) => const LockScreen(setupMode: true),
                   ),
                 );
               },
@@ -152,17 +164,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // LEGAL SECTION
           Text(
             'Legal & Info',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style:
+                theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
 
           ListTile(
             leading: const Icon(Icons.article),
             title: const Text('Terms & Conditions'),
-            subtitle: Text(
-              _termsAccepted ? 'Accepted' : 'Not accepted yet',
-            ),
+            subtitle: Text(_termsAccepted ? 'Accepted' : 'Not accepted yet'),
             onTap: _openTerms,
           ),
 
@@ -178,15 +188,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // APP INFO SECTION
           Text(
             'App',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style:
+                theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
 
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('About SOS Identity'),
-            subtitle: const Text(
+          const ListTile(
+            leading: Icon(Icons.info_outline),
+            title: Text('About SOS Identity'),
+            subtitle: Text(
               'SOS Identity is a personal safety and identity tool by Davecy LLC.',
             ),
           ),

@@ -1,14 +1,9 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// TEMPORARILY DISABLED: flutter_secure_storage causes iOS crashes
-// We'll store PIN in SharedPreferences as a fallback until the iOS issue is resolved
-// import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
-import '../models/id_model.dart';
 import '../models/contact_model.dart';
+import '../models/id_model.dart';
 import '../models/user_profile.dart';
 
 class LocalStorage {
@@ -23,9 +18,6 @@ class LocalStorage {
 
   // PIN key (temporarily in SharedPreferences due to iOS secure storage crash)
   static const String _pinCodeKey = 'safeid_pin_code';
-
-  // Secure storage instance (DISABLED for iOS stability)
-  // static const FlutterSecureStorage _secure = FlutterSecureStorage();
 
   static Future<SharedPreferences> _prefs() => SharedPreferences.getInstance();
 
@@ -136,8 +128,6 @@ class LocalStorage {
     await prefs.setBool(_lockEnabledKey, enabled);
   }
 
-  // TEMPORARY: Store PIN in SharedPreferences until flutter_secure_storage iOS issue is fixed
-  // NOTE: This is less secure but prevents crashes. Re-enable secure storage when stable.
   static Future<String?> getPinCode() async {
     try {
       final prefs = await _prefs();
@@ -151,9 +141,12 @@ class LocalStorage {
     try {
       final prefs = await _prefs();
       await prefs.setString(_pinCodeKey, pin);
-    } catch (_) {
-      // Fail silently
-    }
+    } catch (_) {}
+  }
+
+  static Future<void> clearPinCode() async {
+    final prefs = await _prefs();
+    await prefs.remove(_pinCodeKey);
   }
 
   static Future<DateTime?> getLastUnlockTime() async {
@@ -166,6 +159,22 @@ class LocalStorage {
   static Future<void> setLastUnlockTime(DateTime time) async {
     final prefs = await _prefs();
     await prefs.setInt(_lastUnlockKey, time.millisecondsSinceEpoch);
+  }
+
+  /// ✅ Secure reset: if PIN is forgotten, allow reset but wipe sensitive data.
+  /// This prevents someone from resetting PIN and immediately viewing your IDs/contacts.
+  static Future<void> resetPinAndWipeData() async {
+    final prefs = await _prefs();
+
+    await prefs.remove(_pinCodeKey);
+    await prefs.setBool(_lockEnabledKey, false);
+    await prefs.remove(_lastUnlockKey);
+
+    // Wipe sensitive data
+    await prefs.remove(_idsKey);
+    await prefs.remove(_contactsKey);
+    await prefs.remove(_profileKey);
+    await prefs.remove(_emergencyIdKey);
   }
 
   // ---------------- Terms ----------------

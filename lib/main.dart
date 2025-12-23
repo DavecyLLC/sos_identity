@@ -6,19 +6,18 @@ import 'screens/terms_accept_screen.dart';
 import 'services/local_storage.dart';
 
 void main() async {
-  // ✅ CRITICAL: Ensure Flutter bindings are initialized
+  // ✅ Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // ✅ CRITICAL: Initialize SharedPreferences BEFORE runApp with retry logic
+
+  // ✅ Initialize SharedPreferences BEFORE runApp (with retry)
   try {
     await SharedPreferences.getInstance();
   } catch (e) {
     debugPrint('SharedPreferences init failed: $e');
-    // Try one more time after a small delay
     await Future.delayed(const Duration(milliseconds: 100));
     await SharedPreferences.getInstance();
   }
-  
+
   runApp(const SafeIdApp());
 }
 
@@ -38,10 +37,10 @@ class SafeIdApp extends StatelessWidget {
 
 /// ---------------------------------------------------------
 ///  APP THEME: Orange primary, Blue secondary
-///  Styled buttons: Filled = Orange, Outlined = Orange border/text
+///  ✅ Remove bold globally (text + buttons)
 /// ---------------------------------------------------------
 ThemeData _buildTheme() {
-  return ThemeData(
+  final base = ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
       seedColor: Colors.orange,
@@ -49,6 +48,31 @@ ThemeData _buildTheme() {
       secondary: Colors.blue,
       brightness: Brightness.light,
     ),
+  );
+
+  // ✅ Force ALL text styles to normal weight (removes bold everywhere)
+  final noBoldTextTheme = base.textTheme.copyWith(
+    displayLarge: base.textTheme.displayLarge?.copyWith(fontWeight: FontWeight.normal),
+    displayMedium: base.textTheme.displayMedium?.copyWith(fontWeight: FontWeight.normal),
+    displaySmall: base.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.normal),
+    headlineLarge: base.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.normal),
+    headlineMedium: base.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.normal),
+    headlineSmall: base.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.normal),
+    titleLarge: base.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.normal),
+    titleMedium: base.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.normal),
+    titleSmall: base.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.normal),
+    bodyLarge: base.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.normal),
+    bodyMedium: base.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.normal),
+    bodySmall: base.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.normal),
+    labelLarge: base.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.normal),
+    labelMedium: base.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.normal),
+    labelSmall: base.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.normal),
+  );
+
+  // ✅ Apply no-bold to BOTH textTheme and primaryTextTheme
+  return base.copyWith(
+    textTheme: noBoldTextTheme,
+    primaryTextTheme: noBoldTextTheme,
 
     // 🔶 FILLED BUTTONS (Accept, Start Safety, etc.)
     filledButtonTheme: FilledButtonThemeData(
@@ -59,6 +83,8 @@ ThemeData _buildTheme() {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        // ✅ Remove bold on button labels
+        textStyle: const TextStyle(fontWeight: FontWeight.normal),
       ),
     ),
 
@@ -71,6 +97,8 @@ ThemeData _buildTheme() {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        // ✅ Remove bold on button labels
+        textStyle: const TextStyle(fontWeight: FontWeight.normal),
       ),
     ),
 
@@ -83,6 +111,15 @@ ThemeData _buildTheme() {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        // ✅ Remove bold on button labels
+        textStyle: const TextStyle(fontWeight: FontWeight.normal),
+      ),
+    ),
+
+    // ✅ Also remove bold from TextButton labels (just in case)
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        textStyle: const TextStyle(fontWeight: FontWeight.normal),
       ),
     ),
   );

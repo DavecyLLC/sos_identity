@@ -15,6 +15,28 @@ class IdModel {
     this.backImagePath,
   });
 
+  /// Useful stable identifier for lists, keys, comparisons, etc.
+  /// (Type + Number is usually unique enough for your app.)
+  String get key => '${type.trim()}::${number.trim()}';
+
+  IdModel copyWith({
+    String? type,
+    String? number,
+    String? country,
+    String? expiryDate,
+    String? frontImagePath,
+    String? backImagePath,
+  }) {
+    return IdModel(
+      type: type ?? this.type,
+      number: number ?? this.number,
+      country: country ?? this.country,
+      expiryDate: expiryDate ?? this.expiryDate,
+      frontImagePath: frontImagePath ?? this.frontImagePath,
+      backImagePath: backImagePath ?? this.backImagePath,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'type': type,
@@ -28,12 +50,12 @@ class IdModel {
 
   factory IdModel.fromJson(Map<String, dynamic> json) {
     return IdModel(
-      type: json['type'] as String? ?? '',
-      number: json['number'] as String? ?? '',
-      country: json['country'] as String? ?? '',
-      expiryDate: json['expiryDate'] as String? ?? '',
-      frontImagePath: json['frontImagePath'] as String?,
-      backImagePath: json['backImagePath'] as String?,
+      type: (json['type'] as String? ?? '').trim(),
+      number: (json['number'] as String? ?? '').trim(),
+      country: (json['country'] as String? ?? '').trim(),
+      expiryDate: (json['expiryDate'] as String? ?? '').trim(),
+      frontImagePath: (json['frontImagePath'] as String?)?.trim(),
+      backImagePath: (json['backImagePath'] as String?)?.trim(),
     );
   }
 }
