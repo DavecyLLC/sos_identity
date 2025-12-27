@@ -55,11 +55,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           setState(() => _currentIndex = index);
         },
-        selectedItemColor: Colors.orange,
-        unselectedItemColor: Colors.blueGrey,
+        selectedItemColor: Color(0xFFF0A160),
+        unselectedItemColor: Colors.white,
         selectedLabelStyle: const TextStyle(),
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF4C5D70),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.badge), label: 'IDs'),
@@ -151,14 +151,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 12),
 
                   Text(
-                    'Your Safety',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontSize: 30,
-                      color: Colors.orange,
-                      height: 1.1,
+                      'Your Safety',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF4C5D70),
+                        height: 1.1,
+                      ),
                     ),
-                  ),
+
                   const SizedBox(height: 8),
 
                   Text(
@@ -273,10 +275,10 @@ class _StartSafetyBottomButton extends StatelessWidget {
                   height: 155,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.orange,
+                    color: Color(0xFF4C5D70),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.orange.withOpacity(0.4),
+                        color: Color(0xFF4C5D70).withOpacity(0.4),
                         blurRadius: 18,
                         spreadRadius: 2,
                       ),

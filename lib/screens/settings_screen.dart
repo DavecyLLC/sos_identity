@@ -59,7 +59,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _openTerms() async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const TermsAcceptScreen(),
+        builder: (_) => TermsAcceptScreen(
+          onAccepted: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
     );
     final accepted = await LocalStorage.getTermsAccepted();

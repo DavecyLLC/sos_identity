@@ -5,11 +5,10 @@ import 'screens/dashboard_screen.dart';
 import 'screens/terms_accept_screen.dart';
 import 'services/local_storage.dart';
 
-void main() async {
-  // ✅ Ensure Flutter bindings are initialized
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Initialize SharedPreferences BEFORE runApp (with retry)
+  // Initialize SharedPreferences early (helps avoid plugin init issues on iOS)
   try {
     await SharedPreferences.getInstance();
   } catch (e) {
@@ -30,137 +29,122 @@ class SafeIdApp extends StatelessWidget {
       title: 'SOS Identity',
       debugShowCheckedModeBanner: false,
       theme: _buildTheme(),
-      home: const _TermsGate(),
+      home: const TermsGate(),
     );
   }
 }
 
 /// ---------------------------------------------------------
 ///  APP THEME: Orange primary, Blue secondary
-///  ✅ Remove bold globally (text + buttons)
 /// ---------------------------------------------------------
 ThemeData _buildTheme() {
-  final base = ThemeData(
+  return ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.orange,
-      primary: Colors.orange,
+      seedColor: Color(0xFF4C5D70),
+      primary: Color(0xFF4C5D70),
       secondary: Colors.blue,
       brightness: Brightness.light,
     ),
-  );
-
-  // ✅ Force ALL text styles to normal weight (removes bold everywhere)
-  final noBoldTextTheme = base.textTheme.copyWith(
-    displayLarge: base.textTheme.displayLarge?.copyWith(fontWeight: FontWeight.normal),
-    displayMedium: base.textTheme.displayMedium?.copyWith(fontWeight: FontWeight.normal),
-    displaySmall: base.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.normal),
-    headlineLarge: base.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.normal),
-    headlineMedium: base.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.normal),
-    headlineSmall: base.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.normal),
-    titleLarge: base.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.normal),
-    titleMedium: base.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.normal),
-    titleSmall: base.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.normal),
-    bodyLarge: base.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.normal),
-    bodyMedium: base.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.normal),
-    bodySmall: base.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.normal),
-    labelLarge: base.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.normal),
-    labelMedium: base.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.normal),
-    labelSmall: base.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.normal),
-  );
-
-  // ✅ Apply no-bold to BOTH textTheme and primaryTextTheme
-  return base.copyWith(
-    textTheme: noBoldTextTheme,
-    primaryTextTheme: noBoldTextTheme,
-
-    // 🔶 FILLED BUTTONS (Accept, Start Safety, etc.)
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: Colors.orange,
+        backgroundColor: Color(0xFF4C5D70),
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        // ✅ Remove bold on button labels
-        textStyle: const TextStyle(fontWeight: FontWeight.normal),
       ),
     ),
-
-    // 🟠 OUTLINED BUTTONS (View Terms, Add optional items)
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.orange,
+        foregroundColor: Color(0xFF4C5D70),
         side: const BorderSide(color: Colors.orange, width: 1.5),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        // ✅ Remove bold on button labels
-        textStyle: const TextStyle(fontWeight: FontWeight.normal),
       ),
     ),
-
-    // 🟠 ELEVATED BUTTONS (Legacy buttons)
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.orange,
+        backgroundColor: Color(0xFF4C5D70),
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        // ✅ Remove bold on button labels
-        textStyle: const TextStyle(fontWeight: FontWeight.normal),
-      ),
-    ),
-
-    // ✅ Also remove bold from TextButton labels (just in case)
-    textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        textStyle: const TextStyle(fontWeight: FontWeight.normal),
       ),
     ),
   );
 }
 
 /// ---------------------------------------------------------
-///  TERMS GATE:
-///  If user has not accepted Terms → show the TermsAcceptScreen.
-///  If accepted → show Dashboard.
+///  TERMS GATE (reliable):
+///  - checks terms accepted
+///  - if not accepted, shows TermsAcceptScreen
+///  - after accept, refreshes and shows Dashboard
 /// ---------------------------------------------------------
-class _TermsGate extends StatelessWidget {
-  const _TermsGate();
+class TermsGate extends StatefulWidget {
+  const TermsGate({super.key});
 
-  Future<bool> _checkAccepted() async {
-    return LocalStorage.getTermsAccepted();
+  @override
+  State<TermsGate> createState() => _TermsGateState();
+}
+
+class _TermsGateState extends State<TermsGate> {
+  bool _loading = true;
+  bool _accepted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAccepted();
+  }
+
+  Future<void> _loadAccepted() async {
+    final accepted = await LocalStorage.getTermsAccepted();
+    if (!mounted) return;
+    setState(() {
+      _accepted = accepted;
+      _loading = false;
+    });
+  }
+
+  Future<void> _handleAccepted() async {
+    // Mark accepted + switch screen in the same widget
+    await LocalStorage.setTermsAccepted(true);
+    if (!mounted) return;
+    setState(() {
+      _accepted = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: _checkAccepted(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Theme.of(context).colorScheme.primary,
-                ),
-              ),
+    if (_loading) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(
+              Theme.of(context).colorScheme.primary,
             ),
-          );
-        }
+          ),
+        ),
+      );
+    }
 
-        final accepted = snapshot.data ?? false;
+    if (_accepted) {
+      return const DashboardScreen();
+    }
 
-        if (!accepted) {
-          return const TermsAcceptScreen();
-        }
-
-        return const DashboardScreen();
+    // IMPORTANT: We pass the callback the screen calls after saving
+    return TermsAcceptScreen(
+      onAccepted: () {
+        // safest: replace screen so no black screen back-stack issues
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
       },
     );
   }
